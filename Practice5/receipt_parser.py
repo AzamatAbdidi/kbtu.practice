@@ -18,7 +18,7 @@ total_sum = sum(item["price"] for item in products)
 
 # 3. Итоговый объект (Task 6)
 result = {
-    "date": date_val,
+    "date": date_val, 
     "time": time_val,
     "products": products,
     "total_amount": total_sum,
