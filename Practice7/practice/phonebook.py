@@ -1,127 +1,123 @@
 import psycopg2
 import csv
-from config import load_config
+from config import get_connection
 
-def create_table():
-    # Создание таблицы в PostgreSQL 
+
+def creating_table():
+    conn = get_connection()
+    cur = conn.cursor()
     sql = """
-    CREATE TABLE IF NOT EXISTS phonebook (
+    CREATE TABLE IF NOT EXISTS telefony (
         contact_id SERIAL PRIMARY KEY,
-        contact_name VARCHAR(500) NOT NULL,
-        phone_number VARCHAR(500) NOT NULL UNIQUE
-    )
-    """
-    conn = None
+        name VARCHAR(200) NOT NULL,
+        phone VARCHAR(100) UNIQUE NOT NULL
+    );
+       """
     try:
-        params = load_config()
-        with psycopg2.connect(**params) as conn:
-            with conn.cursor() as cur:
-                # Выполняем SQL-запрос
-                cur.execute(sql)
-                print("Таблица 'phonebook' успешно создана или уже существует.")
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"Ошибка при создании таблицы: {error}")
-
-def insert_contact(name, phone):
-    """ Вставка нового контакта в таблицу phonebook """
-    sql = """INSERT INTO phonebook(contact_name, phone_number)
-             VALUES(%s, %s) RETURNING contact_id;"""
-    conn = None
-    contact_id = None
-    try:
-        params = load_config()
-        # Используем конструкцию with, чтобы соединение закрылось само
-        with psycopg2.connect(**params) as conn:
-            with conn.cursor() as cur:
-                # Выполняем команду. %s — это безопасные "заглушки" для данных
-                cur.execute(sql, (name, phone))
-                
-                # Получаем ID новой записи
-                contact_id = cur.fetchone()[0]
-                
-                # ВАЖНО: фиксируем изменения в базе
-                conn.commit()
-                print(f"Контакт '{name}' успешно добавлен с ID: {contact_id}")
-                
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"Ошибка при добавлении контакта: {error}")
+     cur.execute(sql)
+     conn.commit()
+     print("Table 'telefony' was created succesfully")
+    except Exception as err:
+       print(f"Error with creating table {err}")
+    finally:
+       cur.close()
+       conn.close()
     
-    return contact_id
+if __name__ == "__main__":
+   creating_table()
 
-def insert_from_csv(file_path):
-    """ Загрузка контактов из CSV-файла в базу данных """
-    # Добавил ON CONFLICT DO NOTHING, чтобы не было ошибок при повторном запуске
-    sql = "INSERT INTO phonebook(contact_name, phone_number) VALUES(%s, %s) ON CONFLICT DO NOTHING"
-    params = load_config()
-    
-    try:
-        with psycopg2.connect(**params) as conn:
-            with conn.cursor() as cur:
-                # Открываем CSV файл для чтения
-                with open(file_path, mode='r', encoding='utf-8') as f:
-                    reader = csv.reader(f)
-                    for row in reader:
-                        # row[0] - это имя, row[1] - это телефон
-                        cur.execute(sql, (row[0], row[1]))
-                
-                conn.commit()
-                print(f"Данные из файла {file_path} успешно загружены!")
-                
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"Ошибка при загрузке CSV: {error}")
+def add_contact(user_name, user_phone):
+   conn = get_connection()
+   cur = conn.cursor()
 
-# ЕДИНЫЙ ТОЧКА ЗАПУСКА
-if __name__ == '__main__':
-    # 1. Проверяем/создаем таблицу
-    create_table()
-    
-    # 2. Ручной ввод
-    user_name = input("Введите имя: ")
-    user_phone = input("Введите телефон: ")
-    insert_contact(user_name, user_phone)
-    
-    # 3. Загрузка из файла
-    insert_from_csv('contacts.csv')
+   sql = "INSERT INTO telefony (name,phone) VALUES (%s,%s)"
 
-def update_contact(name, new_phone):
-    """ Обновление номера телефона по имени контакта """
-    sql = "UPDATE phonebook SET phone_number = %s WHERE contact_name = %s"
-    try:
-        params = load_config()
-        with psycopg2.connect(**params) as conn:
-            with conn.cursor() as cur:
-                cur.execute(sql, (new_phone, name))
-                updated_rows = cur.rowcount # Считаем, сколько строк изменилось
-                conn.commit()
-                if updated_rows > 0:
-                    print(f"Контакт '{name}' обновлен. Новый номер: {new_phone}")
-                else:
-                    print(f"Контакт с именем '{name}' не найден.")
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"Ошибка при обновлении: {error}")
+   try:
+      cur.execute(sql, (user_name, user_phone))
+      conn.commit()
+      print(f"The contact {user_name} was succesfully added!")
+   except Exception as err:
+      print(f"The are error with adding contact {err}")
+      conn.rollback()
+   finally:
+      cur.close()
+      conn.close()
 
-def delete_contact(name):
-    """ Удаление контакта по имени """
-    sql = "DELETE FROM phonebook WHERE contact_name = %s"
-    try:
-        params = load_config()
-        with psycopg2.connect(**params) as conn:
-            with conn.cursor() as cur:
-                cur.execute(sql, (name,))
-                deleted_rows = cur.rowcount
-                conn.commit()
-                if deleted_rows > 0:
-                    print(f"Контакт '{name}' успешно удален.")
-                else:
-                    print(f"Контакт '{name}' не найден.")
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"Ошибка при удалении: {error}")
+if __name__ == "__main__":
+   creating_table()
+   print("--- Adding new contact ---")
+   name_input = input("Type the user name: ")
+   phone_input = input("Type the phone number: ")
 
-if __name__ == '__main__':
-    # ... твой предыдущий код (создание, вставка) ...
+   add_contact(name_input, phone_input)
+      
+def import_csv(filename):
+   conn = get_connection()
+   cur = conn.cursor()
+
+   try:
+      with open(filename, mode='r', encoding='utf-8') as f:
+         reader = csv.DictReader(f)
+
+         for row in reader:
+            cur.execute(
+               "INSERT INTO telefony (name, phone) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+               (row['name'], row['phone'])
+            )
+      conn.commit()
+      print(f"Data from file '{filename}' was succesfully imported")
+   except Exception as e:
+      print(f"Error with importing from CSV: {e}")
+      conn.rollback()
+   finally:
+      cur.close()
+      conn.close()
+
+if __name__ == "__main__":
+   import_csv('contacts.csv')
+
+def update_contact(targate_name, new_phone):
+   conn = get_connection()
+   cur = conn.cursor()
+
+   sql = "UPDATE telefony SET phone = %s WHERE name = %s"
+   cur.execute(sql, (new_phone, targate_name))
+   conn.commit()
+   print(f"The contact {targate_name} was updated")
+   cur.close()
+   conn.close()
+
+if __name__ == "__main__":
+    update_contact('Aidyn', '87010009988') 
+
+def delete_contact(target_name):
+    conn = get_connection()
+    cur = conn.cursor()
     
-    # Давай проверим обновление
-    update_contact('Ivan', '87009998877')
+    sql = "DELETE FROM telefony WHERE name = %s"
     
-    # И удалим кого-нибудь для теста
-    delete_contact('Тимурбэк')
+    cur.execute(sql, (target_name,)) # Запятая нужна, чтобы Python понял, что это кортеж
+    conn.commit()
+    
+    print(f"Контакт {target_name} удален.")
+    cur.close()
+    conn.close()
+   
+def query_contacts(search_name):
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    
+    sql = "SELECT * FROM telefony WHERE name ILIKE %s"
+    
+    cur.execute(sql, (f"%{search_name}%",))
+    rows = cur.fetchall()
+    if not rows:
+        print("Ничего не найдено.")
+    else:
+        print("\n--- Результаты поиска ---")
+        for row in rows:
+            print(f"ID: {row[0]} | Имя: {row[1]} | Телефон: {row[2]}")
+    
+    cur.close()
+    conn.close()
