@@ -20,6 +20,7 @@ WHITE = (255, 255, 255) # Максимум всего = белый
 RED = (255, 0, 0)       # Только красный
 BLACK = (0, 0, 0)       # Тишина и пустота = черный
 YELLOW = (255, 255, 0)  # Красный + зеленый = желтый (для монет)
+FIOL = (128, 0, 128)
 
 # --- ЭТАП 4: ТЕКСТ (ШРИФТЫ) ---
 # "Verdana" - это название шрифта, цифры - размер букв
@@ -76,7 +77,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.Surface((50, 80)) # Прямоугольник как машина
-        self.image.fill(RED) # Красим в красный (опасно!)
+        self.image.fill(RED) # Красим в красный 
         self.rect = self.image.get_rect()
         self.rect.center = (random.randint(40, WIDTH-40), 0)
 
@@ -84,7 +85,7 @@ class Enemy(pygame.sprite.Sprite):
         global score # Берем ту самую переменную score, что была в начале
         self.rect.move_ip(0, speed)
         if (self.rect.top > HEIGHT): # Если объехали врага
-            score += 1 # Красава, лови очко
+            score += 1 
             self.rect.top = 0
             self.rect.center = (random.randint(40, WIDTH-40), 0)
 
@@ -161,8 +162,8 @@ while True:
         pygame.mixer.music.stop() # Глушим Токио Дрифт, пора грустить
         crash_sound.play() # Звук удара
         
-        screen.fill(RED) # Заливаем всё красным
-        msg = font_big.render("GAME OVER", True, BLACK)
+        screen.fill(FIOL) # Заливаем всё 
+        msg = font_big.render("SKILL ISSUE", True, BLACK)
         screen.blit(msg, (30, 250)) # Рисуем надпись по центру
         pygame.display.update() # Срочно обновляем экран, чтобы юзер увидел смерть
         

@@ -7,7 +7,7 @@ class PhoneBookApp:
         self.cur = self.conn.cursor()
 
     def search(self, text):
-        self.cur.execute("SELECT * FROM get_contacts_by_pattern(%s)", (text,))
+        self.cur.execute("SELECT * FROM get_contacts_pattern(%s)", (text,))
         return self.cur.fetchall()
     
     def upsert(self, name, phone):

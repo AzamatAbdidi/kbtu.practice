@@ -6,7 +6,7 @@ pygame.init()
 WIDTH, HEIGHT = 800, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Mickey's Clock")
-clock = pygame.time.Clock()
+clock = pygame.time.Clock() 
 
 # 2. Загрузка изображений
 # Убедись, что названия файлов в папке images совпадают!
@@ -20,7 +20,7 @@ except FileNotFoundError:
     exit()
 
 def blit_rotate_center(surf, image, center, angle):
-    """Функция для вращения картинки вокруг центра экрана"""
+    # Функция для вращения картинки вокруг центра экрана
     # Вращаем саму картинку
     rotated_image = pygame.transform.rotate(image, angle)
     # Определяем новый прямоугольник с сохранением центра
